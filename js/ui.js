@@ -354,7 +354,7 @@
     return new Promise(function (resolve) {
       options.forEach(function (o, i) {
         var b = el('button', 'choice', G.esc(o));
-        b.addEventListener('click', function (ev) {
+        G.onPress(b, function (ev) {
           ev.stopPropagation();
           A.play('select');
           dlgChoices.innerHTML = '';
@@ -510,7 +510,7 @@
       var btns = $('.cbtns', ov);
       (o.buttons || ['Continue']).forEach(function (b, i) {
         var bt = el('button', 'btn' + (i === 0 ? ' primary' : ''), b);
-        bt.addEventListener('click', function () {
+        G.onPress(bt, function () {
           A.unlock(); A.play('select');
           if (!o.keep) ui.overlayHide();
           resolve(i);

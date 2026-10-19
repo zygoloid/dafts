@@ -709,9 +709,9 @@
           '<button class="accuse">Accuse someone</button>';
         ui.status(html);
         document.querySelectorAll('#status .suspects button').forEach(function (b) {
-          b.addEventListener('click', function () { act({ t: 'ask', who: b.getAttribute('data-who') }); });
+          G.onPress(b, function () { act({ t: 'ask', who: b.getAttribute('data-who') }); });
         });
-        document.querySelector('#status .accuse').addEventListener('click', function () { act({ t: 'accuse' }); });
+        G.onPress(document.querySelector('#status .accuse'), function () { act({ t: 'accuse' }); });
       }
       ui.onTap = function (s) {
         var p = P.state.cells[s];
@@ -893,8 +893,8 @@
       function status() {
         ui.status('<span class="goal">Free every ghost (<b>' + ghostsLeft() + '</b> left) and finish next to Brenda.</span>' +
           '<div class="boxbtns"><button class="undo">&#8630; Undo</button><button class="restart">Start again</button></div>');
-        document.querySelector('#status .undo').addEventListener('click', function () { if (!busy) undo(); });
-        document.querySelector('#status .restart').addEventListener('click', function () { if (!busy) restart(); });
+        G.onPress(document.querySelector('#status .undo'), function () { if (!busy) undo(); });
+        G.onPress(document.querySelector('#status .restart'), function () { if (!busy) restart(); });
       }
       function show() {
         ui.highlight({ sel: gary(), targets: options().map(function (o) { return o.land; }) });

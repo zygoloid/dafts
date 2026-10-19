@@ -29,6 +29,20 @@ G.el = function (tag, cls, html) {
   if (html != null) e.innerHTML = html;
   return e;
 };
+// Like a click handler, but only for presses that began on this element. Buttons that appear
+// mid-tap (say, choices revealed by the tap that finished a line of dialogue) would otherwise
+// receive that tap's click as soon as the finger lifts.
+G.onPress = function (el, fn) {
+  var armed = false, born = Date.now();
+  el.addEventListener('pointerdown', function () { armed = true; });
+  el.addEventListener('click', function (ev) {
+    // Without a press of its own, only accept keyboard activation of a button that has been
+    // on screen a moment (Safari's clicks carry no pointerType, so age is the tell there).
+    if (!armed && !G.auto && (ev.pointerType || Date.now() - born < 400)) return;
+    armed = false;
+    fn.call(el, ev);
+  });
+};
 G.esc = function (s) {
   return String(s).replace(/[&<>"]/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];

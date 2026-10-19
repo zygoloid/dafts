@@ -49,7 +49,7 @@
     if (ending) await animateEnding(ov);
     return new Promise(function (resolve) {
       ov.querySelectorAll('button[data-a]').forEach(function (b) {
-        b.addEventListener('click', function () { A.unlock(); A.play('select'); resolve(b.getAttribute('data-a')); });
+        G.onPress(b, function () { A.unlock(); A.play('select'); resolve(b.getAttribute('data-a')); });
       });
     }).then(async function (a) {
       if (a === 'play' || a === 'continue') { ui.overlayHide(); return M.playChapter(a === 'play' ? 0 : (s.chapter || 0)); }
@@ -93,9 +93,9 @@
     var ov = ui.overlay(html, 'show');
     return new Promise(function (resolve) {
       ov.querySelectorAll('.chapgrid button').forEach(function (b) {
-        b.addEventListener('click', function () { A.unlock(); A.play('select'); ui.overlayHide(); resolve(M.playChapter(+b.getAttribute('data-i'), true)); });
+        G.onPress(b, function () { A.unlock(); A.play('select'); ui.overlayHide(); resolve(M.playChapter(+b.getAttribute('data-i'), true)); });
       });
-      ov.querySelector('[data-back]').addEventListener('click', function () { A.play('select'); resolve(M.title()); });
+      G.onPress(ov.querySelector('[data-back]'), function () { A.play('select'); resolve(M.title()); });
     });
   };
 
