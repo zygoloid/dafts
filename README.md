@@ -24,3 +24,7 @@ Tap a piece, then tap where it should go. All sound is synthesised, and the spea
 ## Testing
 
 `index.html?auto&fast#ch=N` plays chapter `N` (0-based) by itself at high speed. `window.__dafts.log` records each chapter's result, and `window.__dafts.errors` collects any errors. Add `&talk=1200` to linger on each line of dialogue.
+
+## Licence
+
+Apache License 2.0. See [LICENSE](LICENSE).
