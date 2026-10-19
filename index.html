@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1f1a17">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="A perfectly ordinary game of draughts.">
+<title>Draughts</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23c43a2f'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='%238e231b' stroke-width='6'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <button id="menuBtn" class="iconbtn" aria-label="Menu">&#9776;</button>
+    <div id="chapTitle"></div>
+    <button id="soundBtn" class="iconbtn" aria-label="Sound">&#128266;</button>
+  </header>
+
+  <section id="opponent">
+    <div id="colinAvatar" class="avatar"></div>
+    <div id="colinBark" class="bark"></div>
+    <div id="hud"></div>
+  </section>
+
+  <main id="stage">
+    <div id="boardWrap">
+      <div id="board">
+        <div id="squares"></div>
+        <div id="pieces"></div>
+        <div id="fx"></div>
+        <div id="caption"></div>
+      </div>
+    </div>
+    <div id="arbiter" aria-hidden="true"></div>
+  </main>
+
+  <section id="bottom">
+    <div id="status"></div>
+    <div id="dialogue" class="hidden">
+      <div class="portrait"></div>
+      <div class="body">
+        <div class="name"></div>
+        <div class="text"></div>
+        <div class="choices"></div>
+      </div>
+      <div class="more">&#9660;</div>
+    </div>
+  </section>
+
+  <div id="overlay" class="hidden"></div>
+</div>
+
+<script src="js/util.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/art.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/play.js"></script>
+<script src="js/interludes.js"></script>
+<script src="js/physics.js"></script>
+<script src="js/cutscenes.js"></script>
+<script src="js/story.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
