@@ -17,7 +17,8 @@
     effect: 'remove',    // or 'flip': captured pieces change sides
     singleHop: false,    // no multi-jumps (used when turns are abolished)
     capOnly: false,      // may only move by capturing (the Rules don't walk; they pounce)
-    noEdges: false       // may never stop on an edge square (so it can always be jumped)
+    noEdges: false,      // may never stop on an edge square (so it can always be jumped)
+    crownContinues: false // a man crowned mid-capture carries on jumping as a king (English rules: it stops)
   };
 
   Rules.sq = function (r, c) { return r * 8 + c; };
@@ -95,13 +96,13 @@
 
   function capsFrom(state, origin, p, out) {
     var team = p.team;
-    var single = R(state, team, 'singleHop');
+    var single = R(state, team, 'singleHop'), carryOn = R(state, team, 'crownContinues');
     function flyingFor(king) { return king ? R(state, team, 'flyingKings') : R(state, team, 'flyingMen'); }
     function occ(s) { return s !== origin && state.cells[s] !== null; }
     function push(path, caps, crown) {
       out.push({ from: origin, to: path[path.length - 1], path: path, caps: caps, crown: crown, pid: p.id });
     }
-    function dfs(cur, path, caps, king) {
+    function dfs(cur, path, caps, king, crowned) {
       var r = cur >> 3, c = cur & 7, found = false;
       var dirs = dirsFor(state, p, king, true), fly = flyingFor(king);
       for (var i = 0; i < dirs.length; i++) {
@@ -120,15 +121,15 @@
           found = true;
           var crown = !king && reachesFar(p, lr);
           var np = path.concat([land]), nc = caps.concat([mid]);
-          if (crown || single) push(np, nc, crown);
-          else if (!dfs(land, np, nc, king)) push(np, nc, false);
+          if ((crown && !carryOn) || single) push(np, nc, crowned || crown);
+          else if (!dfs(land, np, nc, king || crown, crowned || crown)) push(np, nc, crowned || crown);
           if (!fly) break;
           lr += d[0]; lc += d[1];
         }
       }
       return found;
     }
-    dfs(origin, [origin], [], !!p.king || p.kind === 'rule');
+    dfs(origin, [origin], [], !!p.king || p.kind === 'rule', false);
   }
 
   function stepsFrom(state, origin, p, out) {

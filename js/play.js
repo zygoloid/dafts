@@ -149,6 +149,10 @@
     P.state = res.state;
     P.last = [mv.from, mv.to];
     P.react(res, mv, team);
+    if (team === 'P' && mv.caps.length && res.crowned && !Rules.R(res.state, 'P', 'crownContinues') &&
+        Rules.moves(res.state, 'P', mv.to).some(function (m) { return m.caps.length; })) {
+      ui.caption('Crowned! In English draughts, being crowned ends your move, even in the middle of a capture.', 3600, 'caption');
+    }
     var mods = (P.cfg && P.cfg.mods) || [];
     for (var i = 0; i < mods.length; i++) if (mods[i].afterMove) await mods[i].afterMove(team, mv, res);
     if (P.cfg && P.cfg.afterMove) await P.cfg.afterMove(team, mv, res);

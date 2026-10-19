@@ -113,7 +113,7 @@
       ['Red moves up the board; black moves down. Pieces move one square diagonally forwards.', 'Any direction. Any distance. Backwards is fine. Sideways is fine.'],
       ['Capture by jumping over an enemy piece into the empty square beyond. You can chain jumps together.', null],
       ['If you can capture, you must.', 'You may capture, if you fancy it.'],
-      ['Reach the far row and your piece is crowned king. Kings can move backwards.', 'Everyone is a king. Crowns for all.'],
+      ['Reach the far row and your piece is crowned king. Kings can move backwards. Being crowned ends your move, even in the middle of a capture.', 'Everyone is a king. Crowns for all.'],
       ['A player who cannot move loses.', 'Nobody loses.'],
       ['The players move alternately.', 'Mostly.']
     ];
@@ -177,6 +177,7 @@
     ['forced', 'You must take', 'Compulsory captures', true],
     ['flying', 'Flying kings', 'Kings slide any distance', false],
     ['back', 'Backwards men', 'Men can move and capture backwards', false],
+    ['crownjump', 'Crowned and carrying on', 'A man crowned mid-capture keeps jumping as a king', false],
     ['flip', 'Same tree', 'Captured pieces change sides', false],
     ['wind', 'A bit of a draught', 'Gusts every couple of turns', false],
     ['eggs', 'Mating season', 'Pairs of pieces lay eggs', false],
@@ -213,7 +214,7 @@
     st.cells[Rules.sq(2, 5)] = Rules.clonePiece(st.cells[Rules.sq(2, 5)], { name: 'brenda' });
     st.rules = {
       forced: !!hr.forced, flyingKings: !!hr.flying, menBack: !!hr.back, menCapBack: !!hr.back,
-      effect: hr.flip ? 'flip' : 'remove'
+      effect: hr.flip ? 'flip' : 'remove', crownContinues: !!hr.crownjump
     };
     P.setup(st);
     var mods = [];
