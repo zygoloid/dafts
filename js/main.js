@@ -141,8 +141,10 @@
     }
     while (true) {
       var r;
+      ui.introStart('intro' + i);
       try { r = await ch.run(); }
       catch (e) { LOG.errors.push('chapter ' + i + ': ' + (e.stack || e)); throw e; }
+      ui.introDone();
       log('result:' + i + ':' + r);
       if (r === 'win') break;
       A.play('lose');

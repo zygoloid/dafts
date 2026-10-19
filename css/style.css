@@ -482,6 +482,7 @@ button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: tra
 .zhint { position: absolute; bottom: calc(12px + env(safe-area-inset-bottom)); left: 0; right: 0; text-align: center; font-size: 11px; opacity: .4; color: #fff; }
 
 .skipbtn { position: absolute; z-index: 5; right: 12px; top: calc(12px + env(safe-area-inset-top)); padding: 8px 14px; border-radius: 999px; border: 0; background: #ffffff22; color: #fff; font-weight: 800; font-size: 13px; box-shadow: inset 0 0 0 1px #ffffff44; }
+#stage .introskip { top: 8px; z-index: 70; background: #000a; }
 #overlay.zoomov .skipbtn { top: auto; bottom: calc(10px + env(safe-area-inset-bottom)); }
 
 /* credits */

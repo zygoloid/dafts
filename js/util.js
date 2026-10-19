@@ -8,6 +8,7 @@ G.talkMs = +((/[?&]talk=(\d+)/.exec(location.search) || [])[1] || 5);   // how l
 
 G.wait = function (ms) {
   if (G.fast) ms = Math.min(ms, 30);
+  if (G.ui && G.ui.skipping) ms = 0;
   return new Promise(function (res) { setTimeout(res, ms); });
 };
 G.rand = function (n) { return Math.floor(Math.random() * n); };

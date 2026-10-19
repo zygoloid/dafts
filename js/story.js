@@ -738,6 +738,7 @@
           }, 20);
         });
       };
+      ui.introDone();
       while (!solved) {
         panel();
         var a = await nextA();
@@ -971,6 +972,7 @@
         }
         return null;
       }
+      ui.introDone();
       show();
       await new Promise(function (resolve) {
         ui.onTap = async function (s) {

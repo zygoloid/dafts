@@ -5,6 +5,7 @@
 
   // cfg: {discs: [{x,y,color,name,kind}], stewards: [{y, cx, amp, speed}], bumpers: [{x,y}], need, onEscape(d, n)}
   Ph.run = function (cfg) {
+    ui.introDone();
     return new Promise(function (resolve) {
       var layer = document.querySelector('#pieces');
       var fx = ui.fx();

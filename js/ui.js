@@ -263,7 +263,7 @@
   var advance = null, typing = null;
   function onAppDown(ev) {
     if (!ui.talking || !advance) return;
-    if (ev.target.closest('#topbar') || ev.target.closest('.choices') || ev.target.closest('#overlay:not(.hidden)')) return;
+    if (ev.target.closest('#topbar') || ev.target.closest('.choices') || ev.target.closest('.introskip') || ev.target.closest('#overlay:not(.hidden)')) return;
     ev.preventDefault();
     ev.stopPropagation();
     if (typing) { typing(); return; }
@@ -326,6 +326,7 @@
   // Blocking line of dialogue. Resolves when the player taps.
   ui.say = async function (who, text, opts) {
     opts = opts || {};
+    if (ui.skipping) { if (!opts.keep) ui.endTalk(); return; }
     var sp = showSpeaker(who, opts);
     dlgChoices.innerHTML = '';
     ui.talking = true;
@@ -334,7 +335,7 @@
     dlg.classList.remove('done');
     await typeInto(dlgText, text, sp.voice);
     dlg.classList.add('done');
-    await new Promise(function (res) {
+    if (!ui.skipping) await new Promise(function (res) {
       advance = res;
       if (G.auto) setTimeout(function () { if (advance === res) { advance = null; res(); } }, G.talkMs);
     });
@@ -349,6 +350,7 @@
   // Shows choices; resolves with the chosen index.
   ui.choose = async function (options, opts) {
     opts = opts || {};
+    if (ui.skipping) return opts.skipPick || 0;
     var who = opts.who || 'you';
     var sp = showSpeaker(who, opts);
     ui.talking = true;
@@ -359,11 +361,18 @@
     if (opts.prompt) await typeInto(dlgText, opts.prompt, sp.voice);
     dlgChoices.innerHTML = '';
     return new Promise(function (resolve) {
+      pendingChoice = function () {
+        dlgChoices.innerHTML = '';
+        dlg.classList.remove('choosing');
+        ui.endTalk();
+        resolve(opts.skipPick || 0);
+      };
       options.forEach(function (o, i) {
         var b = el('button', 'choice', G.esc(o));
         G.onPress(b, function (ev) {
           ev.stopPropagation();
           A.play('select');
+          pendingChoice = null;
           dlgChoices.innerHTML = '';
           dlg.classList.remove('choosing');
           ui.endTalk();
@@ -377,6 +386,41 @@
         if (bs[i]) bs[i].click();
       }, G.talkMs);
     });
+  };
+
+  // ---------------- skippable chapter intros ----------------
+  // A chapter's intro runs from introStart() until its gameplay begins (introDone()). Once an intro
+  // has been seen, a Skip button fast-forwards it: lines and waits resolve at once and sounds are
+  // muted, so the chapter still sets itself up exactly as it would have.
+  var pendingChoice = null, introKey = null, skipBtn = null;
+  ui.skipping = false;
+  function hideSkip() { if (skipBtn) { skipBtn.remove(); skipBtn = null; } }
+  ui.introStart = function (key) {
+    introKey = key;
+    ui.skipping = false;
+    hideSkip();
+    if (!(G.save.watched || {})[key]) return;
+    skipBtn = el('button', 'skipbtn introskip', 'Skip intro &#9654;&#9654;');
+    skipBtn.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+    G.onPress(skipBtn, function () {
+      A.play('select');
+      ui.skipping = true;
+      hideSkip();
+      if (typing) typing();
+      if (advance) { var f = advance; advance = null; f(); }
+      if (pendingChoice) { var c = pendingChoice; pendingChoice = null; c(); }
+    });
+    $('#stage').appendChild(skipBtn);
+  };
+  ui.introDone = function () {
+    if (introKey) {
+      G.save.watched = G.save.watched || {};
+      G.save.watched[introKey] = true;
+      G.writeSave();
+    }
+    introKey = null;
+    ui.skipping = false;
+    hideSkip();
   };
 
   // Non-blocking remarks.

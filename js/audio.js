@@ -108,6 +108,7 @@
     }
   };
   A.play = function (name, arg) {
+    if (G.ui && G.ui.skipping) return;
     try { if (S[name]) S[name](arg); } catch (e) { /* never let audio break the game */ }
   };
   A.buzz = function (ms) { try { if (navigator.vibrate && !G.save.muted) navigator.vibrate(ms); } catch (e) {} };

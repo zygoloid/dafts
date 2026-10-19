@@ -45,6 +45,7 @@
 
   // ---------- player input: tap a piece, tap where it goes (multi-jumps hop by hop) ----------
   P.playerMove = function (moves) {
+    ui.introDone();
     return new Promise(function (resolve) {
       var forcedNow = moves.length && moves[0].caps.length && Rules.R(P.state, 'P', 'forced');
       var froms = [];
@@ -249,6 +250,7 @@
   // ---------- real time: no turns at all ----------
   // cfg: {interval(elapsedMs) -> ms, check(), onMove(team, mv, res)}
   P.runRealtime = function (cfg) {
+    ui.introDone();
     return new Promise(function (resolve) {
       var alive = true, sel = null, t0 = Date.now();
       var started = false, lastMine = Date.now(), lastCap = Date.now(), resignShown = false;
