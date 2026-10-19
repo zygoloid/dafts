@@ -85,7 +85,9 @@
     await G.wait(800);
   }
 
-  M.chapterSelect = async function () {
+  // opts.pick(i) / opts.back() override what happens next (the pause menu reloads into the chapter).
+  M.chapterSelect = async function (opts) {
+    opts = opts || {};
     var max = G.save.done ? G.chapters.length - 1 : (G.save.maxChapter || 0);
     var html = '<div class="card"><h1>Chapters</h1><div class="chapgrid">' + G.chapters.map(function (c, i) {
       return '<button data-i="' + i + '"' + (i > max ? ' disabled' : '') + '>' + (i + 1) + '. ' + (i > max ? '???' : c.title) + '<small>' + (i > max ? 'Not yet.' : c.sub) + '</small></button>';
@@ -93,9 +95,14 @@
     var ov = ui.overlay(html, 'show');
     return new Promise(function (resolve) {
       ov.querySelectorAll('.chapgrid button').forEach(function (b) {
-        G.onPress(b, function () { A.unlock(); A.play('select'); ui.overlayHide(); resolve(M.playChapter(+b.getAttribute('data-i'), true)); });
+        G.onPress(b, function () {
+          A.unlock(); A.play('select');
+          var i = +b.getAttribute('data-i');
+          if (opts.pick) { resolve(opts.pick(i)); return; }
+          ui.overlayHide(); resolve(M.playChapter(i, true));
+        });
       });
-      G.onPress(ov.querySelector('[data-back]'), function () { A.play('select'); resolve(M.title()); });
+      G.onPress(ov.querySelector('[data-back]'), function () { A.play('select'); resolve(opts.back ? opts.back() : M.title()); });
     });
   };
 
@@ -251,13 +258,18 @@
       var ov = document.querySelector('#overlay');
       if (!ov.classList.contains('hidden')) return;
       A.play('select');
+      G.paused = true;
+      await pauseMenu();
+    });
+    async function pauseMenu() {
       var playing = !!document.querySelector('#chapTitle').textContent;
       var btns = playing ? ['Resume', 'Restart this chapter', 'Chapter select', 'Quit to title'] : ['Resume'];
       var b = await ui.card({ title: 'Paused', sub: 'COLIN is waiting patiently. (He is good at that.)', buttons: btns });
       if (b === 1) go('ch=' + (G.save.chapter || 0));
-      else if (b === 2) go('select');
+      else if (b === 2) await M.chapterSelect({ pick: function (i) { go('ch=' + i); }, back: function () { return pauseMenu(); } });
       else if (b === 3) go('');
-    });
+      else { ui.overlayHide(); G.paused = false; }
+    }
     // a first tap anywhere unlocks audio on iOS
     window.addEventListener('pointerdown', function () { A.unlock(); }, { once: true, capture: true });
   }

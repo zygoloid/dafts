@@ -50,6 +50,8 @@
       var froms = [];
       moves.forEach(function (m) { if (froms.indexOf(m.from) < 0) froms.push(m.from); });
       var sel = null, prefix = null, cands = null, dimmed = [];
+      // moves the chapter wants to react to even though they aren't legal (see P.attempts)
+      var attempts = P.attempts ? P.attempts(P.state) : [];
       function refresh() {
         var targets = [];
         if (cands) cands.forEach(function (m) {
@@ -73,6 +75,7 @@
         A.play('capture');
         sel = s;
         refresh();
+        if (!Rules.R(P.state, 'P', 'forced')) ui.caption('Keep jumping, or tap the piece again to stop here.', 2200, 'caption');
       }
       function finish(m) {
         ui.onTap = null;
@@ -85,14 +88,29 @@
         if (prefix && prefix.length > 1) {
           var cont = cands.filter(function (m) { return m.path[prefix.length] === s; });
           if (cont.length) hop(s, cont);
+          else if (s === sel && !Rules.R(P.state, 'P', 'forced')) {
+            // captures aren't compulsory, so neither is finishing a chain of them
+            var base = cands[0];
+            finish({ from: base.from, to: s, path: prefix.slice(), caps: base.caps.slice(0, prefix.length - 1), crown: false, pid: base.pid });
+          }
           else ui.caption('Keep jumping — the capture isn’t finished!', 1600, 'caption');
           return;
         }
         if (sel != null && cands) {
           var nx = cands.filter(function (m) { return m.path[1] === s; });
           if (nx.length) { hop(s, nx); return; }
+          var tried = attempts.filter(function (m) { return m.from === sel && m.path[1] === s; })[0];
+          if (tried && P.onAttempt) { reset(); P.onAttempt(tried); return; }
         }
         var mine = moves.filter(function (m) { return m.from === s; });
+        if (!mine.length && attempts.some(function (m) { return m.from === s; })) {
+          // nothing legal from here, but let the player try the thing the chapter wants to comment on
+          if (sel === s) { reset(); return; }
+          sel = s; prefix = [s]; cands = [];
+          A.play('select');
+          refresh();
+          return;
+        }
         if (mine.length) {
           if (sel === s) { reset(); return; }
           sel = s; prefix = [s]; cands = mine;
@@ -229,7 +247,18 @@
   P.runRealtime = function (cfg) {
     return new Promise(function (resolve) {
       var alive = true, sel = null, t0 = Date.now();
+      var started = false, lastMine = Date.now(), lastCap = Date.now(), resignShown = false;
       P.cfg = { mods: [] };
+      // Real time can wedge: pieces locked together, or kings shuffling forever with nothing to take.
+      // Offer a way out whenever the player stalls or nobody is getting anywhere.
+      function showResign(on) {
+        if (on === resignShown) return;
+        resignShown = on;
+        if (!on) { ui.hud(''); return; }
+        ui.hud('<button class="resign">Resign</button>');
+        var b = document.querySelector('#hud .resign');
+        if (b) G.onPress(b, function () { A.play('bad'); end('lose'); });
+      }
       function refresh() {
         if (sel != null && (!P.state.cells[sel] || P.state.cells[sel].team !== 'P')) sel = null;
         var targets = sel == null ? [] : Rules.moves(P.state, 'P', sel).map(function (m) { return m.to; });
@@ -238,6 +267,7 @@
       function end(r) {
         if (!alive) return;
         alive = false;
+        showResign(false);
         ui.onTap = null;
         ui.highlight({});
         resolve(r);
@@ -248,6 +278,8 @@
         ui.sync(res.state);
         A.play(mv.caps.length ? 'capture' : 'tock');
         P.react(res, mv, team);
+        if (team === 'P') { lastMine = Date.now(); started = true; }
+        if (mv.caps.length) lastCap = Date.now();
         if (cfg.onMove) cfg.onMove(team, mv, res);
         refresh();
         var r = cfg.check();
@@ -270,10 +302,25 @@
         else sel = null;
         refresh();
       };
+      (async function watchdog() {
+        while (alive) {
+          await G.wait(500);
+          if (!alive) break;
+          var mine = Rules.moves(P.state, 'P'), his = Rules.moves(P.state, 'C');
+          if (!mine.length && !his.length) {
+            end(cfg.onDeadlock ? cfg.onDeadlock() : 'lose');
+            break;
+          }
+          var now = Date.now();
+          if (G.paused) { lastMine = now; lastCap += 500; continue; }
+          showResign(!mine.length || now - lastMine > 4000 || now - lastCap > 15000);
+        }
+      })();
       (async function colinLoop() {
         while (alive) {
           await G.wait(cfg.interval(Date.now() - t0));
           if (!alive) break;
+          if (!started || G.paused) { if (!started) t0 = Date.now(); continue; }   // waits for you to go first, and while you're paused
           var moves = Rules.moves(P.state, 'C');
           if (!moves.length) { var r = cfg.check(); if (r) end(r); continue; }
           exec(AI.greedy(P.state, 'C', moves), 'C');

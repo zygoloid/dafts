@@ -307,10 +307,17 @@
       })();
     });
   }
+  // Gary and Brenda can change sides; their portraits should match their piece.
+  function namedColor(who) {
+    var st = G.play && G.play.state;
+    if (!st || (who !== 'gary' && who !== 'brenda')) return null;
+    for (var i = 0; i < 64; i++) if (st.cells[i] && st.cells[i].name === who) return st.cells[i].color;
+    return null;
+  }
   function showSpeaker(who, opts) {
     var sp = SPEAKERS[who] || { name: who };
     dlg.className = 'sp-' + who;
-    dlgPortrait.innerHTML = opts.portrait || Art.portrait(who, opts.mood);
+    dlgPortrait.innerHTML = opts.portrait || Art.portrait(who, opts.mood, namedColor(who));
     dlgName.textContent = opts.name || sp.name;
     if (who === 'colin' && opts.mood) ui.colin(opts.mood);
     if (who === 'arbiter' && opts.mood && ui.arbiterShown) ui.arbiter(opts.mood);
@@ -430,6 +437,7 @@
     if (!ui.arbiterShown) {
       ui.arbiterShown = true;
       a.classList.add('in');
+      app.classList.add('arb-in');
     }
     if (mood && mood !== arbMood) {
       arbMood = mood;
@@ -439,6 +447,7 @@
   ui.arbiterHide = function () {
     ui.arbiterShown = false;
     $('#arbiter').classList.remove('in');
+    app.classList.remove('arb-in');
   };
   function arbBubble(text, ms) {
     var b = $('#arbiter .arbBubble');

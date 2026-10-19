@@ -74,7 +74,7 @@
     ui.colin('neutral');
     ui.status('');
     ui.onTap = null; ui.onDrag = null;
-    P.onSelect = null; P.onTapOther = null; P.cfg = null;
+    P.onSelect = null; P.onTapOther = null; P.cfg = null; P.attempts = null; P.onAttempt = null;
     ui.clearSquareClass('poop'); ui.clearSquareClass('glow'); ui.clearSquareClass('node'); ui.clearSquareClass('opened');
     document.querySelectorAll('#fx > *').forEach(function (e) { e.remove(); });
   }
@@ -104,6 +104,8 @@
       P.setup(Rules.standard());
       await wait(400);
       await say('colin', 'Good evening. I am COLIN.', { mood: 'happy' });
+      await say('colin', 'That is an acronym. It stands for Computerised Opponent, Logical, Infallible, Nonchalant.', { mood: 'happy' });
+      await say('colin', '...I think. It has been a while since anybody asked.', { mood: 'think' });
       await say('colin', 'Red moves up the board. Black moves down. If you can capture, you must.');
       await say('colin', 'Reach the far side and you are crowned. You know the drill.');
       await say('colin', 'Traditionally, black moves first. But you are the guest. After you.', { mood: 'happy' });
@@ -508,7 +510,7 @@
     title: 'Turns Are a Social Construct',
     sub: 'Whose go is it? It doesn’t matter any more.',
     acr: 'COLIN: Constantly Overclocked, Lightning-quick, Impatient, Nippy.',
-    fail: 'COLIN was faster. “Again! Again!” he says.',
+    fail: 'COLIN was faster, or everyone got stuck. “Again! Again!” he says.',
     run: async function () {
       reset(); wake();
       P.setup(std());
@@ -537,7 +539,7 @@
       for (var i = 3; i > 0; i--) { bigText(String(i), 900); A.play('tick'); await wait(800); }
       bigText('GO!', 900); A.play('go');
       var mine = 0, his = 0;
-      var status = function () { return '<span class="goal">Take <b>6</b> before COLIN takes <b>8</b>. You: <b>' + mine + '</b> · COLIN: <b>' + his + '</b></span><span class="hint">No turns. Just go!</span>'; };
+      var status = function () { return '<span class="goal">Take <b>6</b> before COLIN takes <b>8</b>. You: <b>' + mine + '</b> · COLIN: <b>' + his + '</b></span><span class="hint">No turns. COLIN starts when you do. Stuck? Resign and try again.</span>'; };
       ui.status(status());
       var r = await P.runRealtime({
         interval: function (t) { return Math.max(950, 1700 - t / 40); },
@@ -552,6 +554,10 @@
           }
           ui.status(status());
         },
+        onDeadlock: function () {
+          ui.caption('Nobody can move. ' + (mine > his ? 'You were ahead, so that counts!' : 'COLIN was ahead.'), 3000, 'caption');
+          return mine > his ? 'win' : 'lose';
+        },
         check: function () {
           if (mine >= 6 || count('C') === 0) return 'win';
           if (his >= 8 || count('P') === 0) return 'lose';
@@ -560,6 +566,7 @@
       });
       if (r !== 'win') return r;
       await wait(400);
+      if (mine < 6 && count('C') > 0) await say('colin', 'Well. That rather ground to a halt. I shall call it a win for you.', { mood: 'happy' });
       await say('colin', 'Phew. I think I have sprained a transistor.', { mood: 'happy' });
       await ui.whistle();
       ui.arbiter('stern');
@@ -695,15 +702,17 @@
       await say('narrator', 'So the board needed a detective. And there was only one pair of eyes — well, one Finger — for the job.');
       await say('narrator', 'Detective Inspector Finger.');
 
-      var clues = {}, asked = {}, solved = false, busy = false, pending = null;
+      var clues = {}, solved = false, busy = false, pending = null;
       function act(a) { if (busy || !pending) return; var f = pending; pending = null; f(a); }
       function key() { return (clues.whistle ? 1 : 0) + (clues.log ? 1 : 0); }
+      // a suspect is ticked off once they've given up their piece of evidence
+      var SOURCE = { pigeon: 'feather', duck: 'whistle', colin: 'log' };
       var suspects = [['pigeon', 'The Pigeon'], ['duck', 'The Duck'], ['colin', 'COLIN'], ['narrator', 'The Narrator'], ['arbiter', 'The Arbiter']];
       function panel() {
         var names = { cap: 'Brenda’s cap', feather: 'a grey feather', whistle: 'a whistle', log: 'COLIN’s log' };
         var got = Object.keys(clues).map(function (k) { return names[k]; });
         var html = '<div class="suspects">' + suspects.map(function (s) {
-          return '<button data-who="' + s[0] + '" class="' + (asked[s[0]] ? 'done' : '') + '" aria-label="' + s[1] + '">' + Art.portrait(s[0], s[0] === 'arbiter' ? 'stern' : 'neutral') + '</button>';
+          return '<button data-who="' + s[0] + '" class="' + (clues[SOURCE[s[0]]] ? 'done' : '') + '" aria-label="' + s[1] + '">' + Art.portrait(s[0], s[0] === 'arbiter' ? 'stern' : 'neutral') + '</button>';
         }).join('') + '</div>' +
           '<div class="clues">' + (got.length ? 'Clues: ' + got.join(', ') : 'Tap a suspect to question them, or tap things on the board.') + '</div>' +
           '<button class="accuse">Accuse someone</button>';
@@ -748,7 +757,6 @@
           }
         }
         if (a.t === 'ask') {
-          asked[a.who] = true;
           if (a.who === 'pigeon') {
             var q = await choose(['Where were you when the lights went out?', 'Did you take Brenda?', 'What’s that feather?'], { prompt: 'Questioning the Pigeon.' });
             A.play('coo');
@@ -1205,6 +1213,32 @@
           ui.caption('The last rule is no longer protected. Take it!', 3000, 'caption');
         }
       }
+      // Let the player *try* to take the last rule early (even past a compulsory capture), so the
+      // Arbiter can tell them why they can't.
+      var triedLose = 0;
+      P.attempts = function (st) {
+        if (!st.lockLose) return [];
+        var cl = Rules.cloneState(st);
+        cl.lockLose = false;
+        cl.teamRules = { P: Object.assign({}, st.teamRules.P, { forced: false }), C: st.teamRules.C };
+        var ls = Rules.find(st, function (p) { return p.rule === 'lose'; });
+        return Rules.moves(cl, 'P').filter(function (m) { return m.caps[0] === ls; });
+      };
+      P.onAttempt = async function () {
+        A.play('bad');
+        var ls = Rules.find(P.state, function (p) { return p.rule === 'lose'; });
+        if (ls >= 0) ui.pieceAnim(P.state.cells[ls].id, 'shake', 700);
+        var left = Object.keys(RULES).filter(function (k) { return k !== 'lose' && !gone[k]; }).length;
+        if (triedLose++ === 0) {
+          ui.arbiter('angry');
+          await say('arbiter', 'HANDS OFF! That is the first rule. It holds up all the others.', { mood: 'angry' });
+          await say('arbiter', 'You cannot break it while a single rule it holds up is still standing. And ' + (left === 1 ? 'one still is' : left + ' still are') + '!', { mood: 'smug' });
+          ui.arbiterHide();
+          ui.caption('Take the other Rules first. (Amendments don’t count: they’re non-normative.)', 3600, 'caption');
+        } else {
+          ui.caption('“Must lose” is shielded until the other ' + left + ' Rule' + (left === 1 ? ' is' : 's are') + ' gone. Amendments don’t count.', 3200, 'caption');
+        }
+      };
       var r = await P.run({
         ai: { depth: 3, noise: 20 },
         aiDelay: 500,
@@ -1220,7 +1254,7 @@
               if (c.rule) await broke(c.rule);
             }
           } else if (res.captured.length) {
-            bark('arbiter', G.pick(['RULES ARE RULES!', 'Penalty! Off you go!', 'To the Box with you!', '§2.4, my friend.']), 2000);
+            bark('arbiter', G.pick(['RULES ARE RULES!', 'Penalty! Off you go!', 'To the Box with you!', gone.forced ? 'Still got it!' : '§2.4, my friend.']), 2000);
           }
         },
         afterRound: async function () {

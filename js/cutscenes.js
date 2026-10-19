@@ -158,10 +158,30 @@
     });
   }
 
+  // Once a cutscene has been seen, offer a Skip button. Returns a promise that resolves on skip.
+  function skippable(ov, key) {
+    var watched = (G.save.watched = G.save.watched || {});
+    var p = new Promise(function (res) {
+      if (!watched[key]) return;
+      var b = G.el('button', 'skipbtn', 'Skip &#9654;&#9654;');
+      b.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+      G.onPress(b, function () { A.play('select'); res(true); });
+      ov.appendChild(b);
+    });
+    return {
+      promise: p,
+      done: function () { watched[key] = true; G.writeSave(); }
+    };
+  }
+
   C.zoomOut = async function () {
+    var skipped = false;
     var ov = ui.overlay('<div class="zoom"><svg class="zsvg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"></svg>' +
       '<div class="zcap"></div><div class="zline"></div><div class="zhint">tap to continue</div></div>', 'show zoomov');
     var svg = ov.querySelector('.zsvg'), cap = ov.querySelector('.zcap'), line = ov.querySelector('.zline');
+    var sk = skippable(ov, 'zoom');
+    sk.promise.then(function () { skipped = true; });
+    function race(p) { return Promise.race([p, sk.promise]); }
     var content = boardFrame(null);
     svg.innerHTML = content;
     A.play('whoosh');
@@ -175,19 +195,23 @@
         cap.classList.remove('on');
         var span = Math.log(100 / st.inner.w);
         A.play('whoosh');
-        await animateBox(svg, st.inner, { x: 0, y: 0, w: 100 }, 900 + span * 420);
+        await race(animateBox(svg, st.inner, { x: 0, y: 0, w: 100 }, 900 + span * 420));
+        if (skipped) break;
       }
       cap.textContent = st.cap;
       cap.classList.add('on');
       if (st.line) {
-        await G.wait(900);
+        await race(G.wait(900));
+        if (skipped) break;
         line.innerHTML = '<b>' + ui.SPEAKERS[st.line[0]].name + ':</b> ' + G.esc(st.line[1]).replace(/\*([^*]+)\*/g, '<em>$1</em>');
         line.classList.add('on');
         A.play('blip', ui.SPEAKERS[st.line[0]].voice);
       }
-      await tapOrWait(ov, st.line ? 4200 : 3200);
+      await race(tapOrWait(ov, st.line ? 4200 : 3200));
+      if (skipped) break;
     }
-    await G.wait(400);
+    sk.done();
+    if (!skipped) await G.wait(400);
     ui.overlayHide();
   };
 
@@ -230,7 +254,8 @@
     var ov = ui.overlay('<div class="credits"><div class="roll">' + html + '</div></div>', 'show creditsov');
     A.play('fanfare');
     var roll = ov.querySelector('.roll');
-    await tapOrWait(ov, 600);
+    var sk = skippable(ov, 'credits');
+    await Promise.race([tapOrWait(ov, 600), sk.promise]);
     roll.classList.add('go');
     await new Promise(function (res) {
       var done = false;
@@ -238,7 +263,9 @@
       roll.addEventListener('animationend', f);
       setTimeout(f, G.fast ? 30 : 32000);
       ov.addEventListener('dblclick', f);
+      sk.promise.then(f);
     });
+    sk.done();
     ui.overlayHide();
   };
 })();

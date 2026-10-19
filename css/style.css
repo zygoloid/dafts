@@ -71,6 +71,7 @@ button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: tra
 .hudtxt .bar { height: 5px; width: 110px; background: #0006; border-radius: 3px; overflow: hidden; margin-top: 4px; }
 .hudtxt .bar i { display: block; height: 100%; width: 30%; background: var(--colin); animation: barmove 1.4s ease-in-out infinite; }
 @keyframes barmove { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+.resign { padding: 8px 14px; border-radius: 999px; border: 0; background: #ffffff1a; color: var(--text); font-weight: 800; font-size: 13px; box-shadow: inset 0 0 0 1px #ffffff33; animation: fadein .3s; }
 .vane {
   width: 36px; height: 36px; border-radius: 50%; background: #10202c; border: 2px solid #4a7a9a;
   display: flex; align-items: center; justify-content: center; flex: none;
@@ -292,9 +293,10 @@ button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: tra
   padding: 8px 10px; border-radius: 8px; background: #0d0a08e0; color: #f3eadf;
   font-size: 13.5px; line-height: 1.35; text-align: center;
   opacity: 0; transform: translateY(6px); transition: opacity .25s, transform .25s;
-  z-index: 30; pointer-events: none;
+  z-index: 45; pointer-events: none;
 }
 #caption.on { opacity: 1; transform: none; }
+#app.arb-in #caption { right: 24%; left: 2%; }
 #caption.cap-narrator { font-family: Georgia, "Times New Roman", serif; font-style: italic; background: #120f1ae8; border-left: 3px solid #e2b33c; text-align: left; }
 #caption.cap-narrator::before { content: '\1F399\FE0F  '; font-style: normal; }
 #caption.cap-arbiter { font-family: Georgia, serif; background: #fffdf6f0; color: #2a1a12; }
@@ -478,6 +480,9 @@ button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: tra
 .zline b { color: #b0281e; }
 .zcap.on, .zline.on { opacity: 1; transform: translate(-50%, 0); }
 .zhint { position: absolute; bottom: calc(12px + env(safe-area-inset-bottom)); left: 0; right: 0; text-align: center; font-size: 11px; opacity: .4; color: #fff; }
+
+.skipbtn { position: absolute; z-index: 5; right: 12px; top: calc(12px + env(safe-area-inset-top)); padding: 8px 14px; border-radius: 999px; border: 0; background: #ffffff22; color: #fff; font-weight: 800; font-size: 13px; box-shadow: inset 0 0 0 1px #ffffff44; }
+#overlay.zoomov .skipbtn { top: auto; bottom: calc(10px + env(safe-area-inset-bottom)); }
 
 /* credits */
 #overlay.creditsov { background: #0b0807; overflow: hidden; align-items: flex-start; }

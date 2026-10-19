@@ -105,21 +105,24 @@
       '<circle cx="40" cy="52" r="3.6" fill="#111"/><circle cx="62" cy="52" r="3.6" fill="#111"/>' +
       (brows || '') + (extra || '') + '</svg>';
   }
-  Art.gary = function (mood) {
+  var DISC = { red: ['#c43a2f', '#7c1d16', '#4a0f0a'], black: ['#2d2d32', '#0e0e10', '#ddd'] };
+  Art.gary = function (mood, color) {
+    var d = DISC[color] || DISC.red;
     var brows = mood === 'happy'
-      ? '<path d="M31 37 Q39 33 46 37" stroke="#4a0f0a" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M54 37 Q61 33 69 37" stroke="#4a0f0a" stroke-width="3" fill="none" stroke-linecap="round"/>'
-      : mood === 'shock' ? '<path d="M31 33 Q39 28 46 33" stroke="#4a0f0a" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M54 33 Q61 28 69 33" stroke="#4a0f0a" stroke-width="3" fill="none" stroke-linecap="round"/>'
-      : '<path d="M31 40 L45 35" stroke="#4a0f0a" stroke-width="3" stroke-linecap="round"/><path d="M69 40 L55 35" stroke="#4a0f0a" stroke-width="3" stroke-linecap="round"/>';
+      ? '<path d="M31 37 Q39 33 46 37" stroke="' + d[2] + '" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M54 37 Q61 33 69 37" stroke="' + d[2] + '" stroke-width="3" fill="none" stroke-linecap="round"/>'
+      : mood === 'shock' ? '<path d="M31 33 Q39 28 46 33" stroke="' + d[2] + '" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M54 33 Q61 28 69 33" stroke="' + d[2] + '" stroke-width="3" fill="none" stroke-linecap="round"/>'
+      : '<path d="M31 40 L45 35" stroke="' + d[2] + '" stroke-width="3" stroke-linecap="round"/><path d="M69 40 L55 35" stroke="' + d[2] + '" stroke-width="3" stroke-linecap="round"/>';
     var plaster = '<g transform="rotate(30 74 30)"><rect x="62" y="25" width="24" height="9" rx="3" fill="#e8c39a" stroke="#b9936b"/><rect x="70" y="26" width="8" height="7" fill="#d6ab7f"/></g>';
-    return disc('#c43a2f', '#7c1d16', plaster, brows);
+    return disc(d[0], d[1], plaster, brows);
   };
-  Art.brenda = function (mood) {
+  Art.brenda = function (mood, color) {
+    var d = DISC[color] || DISC.black;
     var brows = mood === 'sad'
-      ? '<path d="M31 41 L45 37" stroke="#ddd" stroke-width="3" stroke-linecap="round"/><path d="M69 41 L55 37" stroke="#ddd" stroke-width="3" stroke-linecap="round"/>'
-      : '<path d="M31 37 L45 41" stroke="#ddd" stroke-width="3" stroke-linecap="round"/><path d="M69 37 L55 41" stroke="#ddd" stroke-width="3" stroke-linecap="round"/>';
+      ? '<path d="M31 41 L45 37" stroke="' + d[2] + '" stroke-width="3" stroke-linecap="round"/><path d="M69 41 L55 37" stroke="' + d[2] + '" stroke-width="3" stroke-linecap="round"/>'
+      : '<path d="M31 37 L45 41" stroke="' + d[2] + '" stroke-width="3" stroke-linecap="round"/><path d="M69 37 L55 41" stroke="' + d[2] + '" stroke-width="3" stroke-linecap="round"/>';
     var cap = '<path d="M16 34 Q22 10 54 12 Q80 14 82 30 L92 33 Q90 38 80 37 Q50 40 18 38 Z" fill="#7b6a4f" stroke="#4d412f" stroke-width="2"/>' +
       '<path d="M24 24 L76 22 M22 30 L80 28" stroke="#5c4f3a" stroke-width="1" opacity=".6"/>';
-    return disc('#2d2d32', '#0e0e10', cap, brows);
+    return disc(d[0], d[1], cap, brows);
   };
   Art.narrator = function () {
     return '<svg viewBox="0 0 100 100">' +
@@ -166,12 +169,12 @@
   Art.pigeonSvg = Art.pigeon;
 
   // portrait dispatcher
-  Art.portrait = function (who, mood) {
+  Art.portrait = function (who, mood, color) {
     switch (who) {
       case 'colin': return Art.colin(mood);
       case 'arbiter': return Art.arbiter(mood || 'stern');
-      case 'gary': return Art.gary(mood);
-      case 'brenda': return Art.brenda(mood);
+      case 'gary': return Art.gary(mood, color);
+      case 'brenda': return Art.brenda(mood, color);
       case 'narrator': return Art.narrator();
       case 'pigeon': return Art.pigeon();
       case 'duck': return Art.duck();
