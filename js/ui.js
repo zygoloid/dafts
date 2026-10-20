@@ -426,6 +426,7 @@
   // Non-blocking remarks.
   var barkTimer = null;
   ui.bark = function (who, text, ms) {
+    if (window.__dafts) window.__dafts.log.push('bark:' + who + ':' + text);
     ms = ms || 2400;
     if (who === 'colin') {
       var b = $('#colinBark');

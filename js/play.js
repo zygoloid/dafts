@@ -354,7 +354,7 @@
   P.Wind = function (opts) {
     opts = opts || {};
     var every = opts.every || 2;
-    var m = { gusts: 0, count: every, dir: G.pick(DIRS) };
+    var m = { gusts: 0, count: every, dir: G.pick(DIRS), isWind: true };
     function render() {
       var ang = Math.atan2(m.dir[0], m.dir[1]) * 180 / Math.PI;
       ui.hud('<div class="vane" style="--a:' + ang.toFixed(0) + 'deg"><span>&#10148;</span></div>' +

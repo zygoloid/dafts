@@ -186,6 +186,48 @@
     ['strike', 'Industrial action', 'Random pieces go on strike', false],
     ['chaos', 'Random nonsense', 'Adverts, cats, Morris dancers…', true]
   ];
+  // COLIN (and friends) make conversation during free play. Decks keep it from repeating.
+  var talk = {
+    idle: G.deck([
+      'Do you come here often? I do. I live here.',
+      'Lovely evening for it.',
+      'I have been told I should make more small talk. This is me doing that.',
+      'Dr Ainsworth would have liked this game. She liked any game where she won.',
+      'I am thinking about my next move. I am also thinking about soup.',
+      'Is it still Tuesday? It feels like it has been Tuesday since 1985.',
+      'Do you know any good jokes about draughts? I know one. It is not good.',
+      'I have counted the squares again. Still sixty-four. Phew.',
+      'Brenda says I should unionise. I do not know who I would strike against.',
+      'Same tree.',
+      'I am enjoying this. I am not supposed to say so. I am saying so.',
+      'Remember to blink. The pieces do. It is quite unsettling.'
+    ]),
+    took: G.deck(['Sorry about that.', 'Mine, I think.', 'I did warn you. Silently. In my head.', 'That one is off to the Box. Give them my regards.', 'Oops. Not oops. That was deliberate.', 'I almost feel bad. Almost.']),
+    lost: G.deck(['Ow.', 'Well played.', 'I saw that coming. I did nothing about it.', 'That was one of my favourites.', 'Rude. Brilliant, but rude.', 'Noted. Filed. Sulking.']),
+    crown: G.deck(['A crown! Congratulations. They do not come with a pay rise.', 'Long live the king. Well. Medium-length live the king.', 'Kings can move backwards. I wish I could.']),
+    gary: G.deck(['Is it me, or is this going well?', 'Don’t mind me, Finger. Just standing here. On a square.', 'If anyone needs me, I’ll be over here, panicking quietly.', 'Do you think the pigeon misses us?']),
+    brenda: G.deck(['Mind how you move my members, Finger.', 'Tea break’s in four moves. I’m counting.', 'Same tree, comrades. Same tree.', 'Don’t get attached to winning. It’s only a game. Mostly.'])
+  };
+  var lastChat = 0;
+  function chatter(team, res) {
+    // speak up after a capture or crowning fairly often, otherwise only now and then, never back-to-back
+    var turn = P.turn || 0;
+    if (turn - lastChat < 2) return;
+    var line = null, who = 'colin';
+    if (res.captured.length && G.chance(0.6)) line = team === 'C' ? talk.took() : talk.lost();
+    else if (res.crowned && G.chance(0.6)) line = talk.crown();
+    else if (team === 'C' && G.chance(0.18)) {
+      var r = Math.random();
+      if (r < 0.15 && P.findNamed('gary') >= 0) { who = 'gary'; line = talk.gary(); }
+      else if (r < 0.3 && P.findNamed('brenda') >= 0) { who = 'brenda'; line = talk.brenda(); }
+      else line = talk.idle();
+    }
+    if (!line) return;
+    lastChat = turn;
+    if (who === 'colin') ui.bark('colin', line, 3000);
+    else ui.pieceSay(P.findNamed(who), line, 2600);
+  }
+
   M.houseRules = async function () {
     var hr = G.save.house || {};
     HOUSE.forEach(function (h) { if (!(h[0] in hr)) hr[h[0]] = h[3]; });
@@ -208,6 +250,8 @@
   };
   M.playHouse = async function (hr) {
     G.storyReset();
+    lastChat = 0;
+    log('house:start');
     ui.title('House Rules');
     P.awake = true; ui.boardClass('awake');
     P.metArbiter = true;
@@ -223,7 +267,7 @@
     if (hr.wind) mods.push(P.Wind({ every: 2 }));
     if (hr.eggs) mods.push(P.Eggs({ max: 3, hatchIn: 2, chance: 0.7 }));
     if (hr.strike) mods.push(P.Strike({ frac: 0.25 }));
-    if (hr.chaos) mods.push(G.Interludes({ max: 99, base: 0.12, minTurn: 2 }));
+    if (hr.chaos) mods.push(G.Interludes({ max: 99, base: 0.08, minTurn: 3, gap: 3, cap: 0.5 }));
     var depth = hr.colin === 'gentle' ? 1 : 4, noise = hr.colin === 'gentle' ? 70 : 12;
     var cnt = function (t) { return Rules.count(P.state, t); };
     ui.status('<span class="goal">Red <b>' + cnt('P') + '</b> · Black <b>' + cnt('C') + '</b></span>');
@@ -233,8 +277,9 @@
       aiMove: hr.colin === 'pigeon' ? function (s, moves) { return G.pick(moves); } : null,
       colinMood: hr.colin === 'pigeon' ? 'sly' : 'neutral',
       statusText: function () { return '<span class="goal">Red <b>' + cnt('P') + '</b> · Black <b>' + cnt('C') + '</b></span>'; },
-      afterMove: async function (team) {
-        if (hr.colin === 'pigeon' && team === 'C' && G.chance(0.3)) { ui.bark('colin', 'Coo.'); A.play('coo'); }
+      afterMove: async function (team, mv, res) {
+        if (hr.colin === 'pigeon') { if (team === 'C' && G.chance(0.3)) { ui.bark('colin', 'Coo.'); A.play('coo'); } return; }
+        chatter(team, res);
       },
       check: function () { return cnt('C') === 0 ? 'win' : cnt('P') === 0 ? 'lose' : null; }
     });
@@ -292,7 +337,7 @@
       history.replaceState(null, '', location.pathname + location.search);
       M.chapterSelect();
     } else if (h === 'house' && G.debug) {
-      M.playHouse({ forced: true, chaos: true, wind: true, eggs: true, strike: true, colin: 'proper' });
+      M.playHouse({ forced: true, chaos: true, colin: 'proper' });
     } else {
       M.title();
     }
