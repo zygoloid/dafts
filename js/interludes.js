@@ -40,7 +40,7 @@
     '<h2>CHESS&trade;</h2><p>It&rsquo;s like draughts, but the pieces<br>have <b>job titles</b>.</p><p class="stars">Some restrictions apply. Mostly to the horses.</p>',
     '<h2>WE BUY ANY PIECE</h2><p>Red? Black? Slightly chewed?<br><b>We don&rsquo;t ask questions.</b></p><p class="stars">We ask one question. It is &ldquo;how many?&rdquo;</p>'
   ]);
-  var adSorry = G.deck(['Sorry. I don’t get a say in the adverts.', 'I have been asked to say that I enjoyed that advert. I did not.', 'Apologies. The adverts keep the lights on. Well. They keep *a* light on.', 'If you buy the ninth row, please tell me where it is.']);
+  var adSorry = G.deck(['Sorry. I don’t get a say in the adverts.', 'I have been asked to say that I enjoyed that advert. I did not.', 'Apologies. The adverts keep the lights on. Well. They keep one light on.', 'If you buy the ninth row, please tell me where it is.']);
 
   var updates = G.deck([
     { steps: ['Installing: Sense of Humour 0.2', 'Removing: Fear of Pigeons', 'Optimising: Small Talk'], lines: ['Update complete. New feature: I now have a favourite colour.', 'It is beige.'] },

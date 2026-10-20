@@ -87,6 +87,8 @@
     };
   }
 
+  var colinTakes = G.deck(['Mine, I think.', 'Pardon me.', 'Terribly sorry.', 'Do excuse me.', 'Ah. Yes. That one.']);
+
   // =================================================================
   // 1. An ordinary game
   // =================================================================
@@ -120,7 +122,7 @@
             if (n === 2) bark('colin', 'A classical opening.');
             if (n === 4) bark('colin', 'I have played 3,141,592 games. I have lost none of them. I have drawn... rather a lot.', 4200);
           } else if (res.captured.length && !screamed && phase < 2) {
-            bark('colin', G.pick(['Mine, I think.', 'Pardon me.', 'Terribly sorry.']));
+            bark('colin', colinTakes());
           }
           if (phase >= 2 && !screamed && res.captured.length) {
             screamed = true;
